@@ -1,0 +1,39 @@
+{
+  "name": "pdf.ly",
+  "version": "1.0.1",
+  "description": "PDF.ly is an AI-powered tool for querying and interacting with PDF documents using natural language.",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "concurrently -n \"BACKEND,WORKER\" -c \"blue,green\" \"pnpm run init\" \"pnpm run init:worker\"",
+    "init": "node index.js",
+    "init:worker": "node worker.js",
+    "dev": "concurrently -n \"BACKEND,WORKER\" -c \"blue,green\" \"pnpm run dev:init\" \"pnpm run dev:worker\"",
+    "dev:init": "nodemon index.js",
+    "dev:worker": "nodemon worker.js"
+  },
+  "keywords": [],
+  "author": "Sourav Kumar Agarwal",
+  "license": "ISC",
+  "packageManager": "pnpm@10.16.1",
+  "dependencies": {
+    "@google/genai": "^1.23.0",
+    "@google/generative-ai": "^0.24.1",
+    "@langchain/community": "^0.3.57",
+    "@langchain/core": "^0.3.78",
+    "@langchain/google-genai": "^0.2.18",
+    "@langchain/qdrant": "^0.1.3",
+    "@langchain/textsplitters": "^0.1.0",
+    "body-parser": "^2.2.0",
+    "bullmq": "^5.61.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "multer": "^2.0.2",
+    "pdf-parse": "^1.1.1"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "nodemon": "^3.1.10"
+  }
+}
