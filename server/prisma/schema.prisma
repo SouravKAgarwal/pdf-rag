@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ── Enums ──────────────────────────────────────────────────────────────────────
+
+enum DocStatus {
+  processing
+  ready
+  error
+}
+
+enum MsgRole {
+  user
+  assistant
+}
+
+// ── Models ─────────────────────────────────────────────────────────────────────
+
+model Document {
+  id           String        @id @default(cuid())
+  userId       String
+  filename     String
+  size         Int
+  mimeType     String
+  jobId        String        @unique
+  status       DocStatus     @default(processing)
+  pageCount    Int?
+  errorMessage String?
+  createdAt    DateTime      @default(now())
+  messages     ChatMessage[]
+
+  @@index([userId])
+  @@index([jobId])
+}
+
+model ChatMessage {
+  id         String   @id @default(cuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  role       MsgRole
+  content    String
+  createdAt  DateTime @default(now())
+
+  @@index([documentId])
+}

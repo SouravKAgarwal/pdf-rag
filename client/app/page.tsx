@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { SignedIn, SignedOut } from "@clerk/nextjs";
+import { Show } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
+import Header from "./_components/header";
 
 const USERS_PIC = [
   { src: "/assets/rita.jpg" },
@@ -14,8 +15,9 @@ const USERS_PIC = [
 export default function Home() {
   return (
     <>
+      <Header />
       <section className="p-6 md:p-32 bg-[#062427] min-h-svh text-white">
-        <div className="flex flex-col max-w-[750px] gap-6">
+        <div className="flex flex-col max-w-187.5 gap-6">
           <h1 className="text-5xl font-medium font-serif">
             Chat With any PDF document
           </h1>
@@ -27,7 +29,7 @@ export default function Home() {
         </div>
 
         <div className="mt-6">
-          <SignedOut>
+          <Show when="signed-out">
             <Button
               variant="secondary"
               size="lg"
@@ -35,8 +37,8 @@ export default function Home() {
             >
               Get Started for FREE
             </Button>
-          </SignedOut>
-          <SignedIn>
+          </Show>
+          <Show when="signed-in">
             <Button
               variant="secondary"
               size="lg"
@@ -45,7 +47,7 @@ export default function Home() {
             >
               <Link href="/chat">Upload PDF</Link>
             </Button>
-          </SignedIn>
+          </Show>
         </div>
 
         <div className="flex justify-start mt-6">
