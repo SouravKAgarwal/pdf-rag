@@ -10,10 +10,15 @@ dotenv.config({ quiet: true });
 const router = Router();
 
 const COLLECTION_NAME = "pdf-ai-docs";
-const QDRANT_URL = process.env.QDRANT_URL ?? "http://localhost:6333";
+if (!process.env.QDRANT_URL) {
+  throw new Error("QDRANT_URL environment variable is not defined");
+}
+const QDRANT_URL = process.env.QDRANT_URL;
 
-// ── List all documents for the authenticated user ─────────────────────────────
-
+/**
+ * GET /documents
+ * Retrieves a list of all documents belonging to the authenticated user.
+ */
 router.get(
   "/",
   verifyAuth,
@@ -40,8 +45,10 @@ router.get(
   }),
 );
 
-// ── Delete a document + its Qdrant vectors (cascades to ChatMessages) ─────────
-
+/**
+ * DELETE /documents/:id
+ * Deletes a document, its associated vectors from Qdrant, and related chat messages.
+ */
 router.delete(
   "/:id",
   verifyAuth,

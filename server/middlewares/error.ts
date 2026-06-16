@@ -1,7 +1,8 @@
 import type { Request, Response, NextFunction } from "express";
 
-// ── Custom error class ───────────────────────────────────────────────────────
-
+/**
+ * Custom application error class.
+ */
 export class AppError extends Error {
   public readonly statusCode: number;
   public readonly code: string;
@@ -21,8 +22,9 @@ export class AppError extends Error {
   }
 }
 
-// ── Pre-built error factories ────────────────────────────────────────────────
-
+/**
+ * Pre-built error factories.
+ */
 export const Errors = {
   badRequest: (message = "Bad request") =>
     new AppError(message, 400, "BAD_REQUEST"),
@@ -52,8 +54,6 @@ export const Errors = {
     new AppError(message, 500, "INTERNAL_ERROR", false),
 };
 
-// ── Multer error mapping ─────────────────────────────────────────────────────
-
 function isMulterError(err: unknown): err is { code: string; message: string } {
   return (
     typeof err === "object" &&
@@ -66,7 +66,7 @@ function isMulterError(err: unknown): err is { code: string; message: string } {
 function handleMulterError(err: { code: string; message: string }): AppError {
   switch (err.code) {
     case "LIMIT_FILE_SIZE":
-      return Errors.tooLarge("File exceeds the maximum allowed size (50 MB)");
+      return Errors.tooLarge("File exceeds the maximum allowed size (10 MB)");
     case "LIMIT_FILE_COUNT":
       return Errors.badRequest("Too many files uploaded");
     case "LIMIT_UNEXPECTED_FILE":
@@ -76,14 +76,17 @@ function handleMulterError(err: { code: string; message: string }): AppError {
   }
 }
 
-// ── 404 handler (unknown routes) ─────────────────────────────────────────────
-
+/**
+ * Express middleware to handle 404 Not Found errors.
+ */
 export function notFoundHandler(req: Request, _res: Response, next: NextFunction) {
   next(Errors.notFound(`Route not found: ${req.method} ${req.originalUrl}`));
 }
 
-// ── Global error handler ─────────────────────────────────────────────────────
-
+/**
+ * Express middleware for global error handling.
+ * Catches AppErrors and Multer errors to format them appropriately.
+ */
 export function globalErrorHandler(
   err: Error,
   _req: Request,
@@ -131,8 +134,10 @@ export function globalErrorHandler(
   });
 }
 
-// ── Async route wrapper (catches thrown/rejected errors automatically) ────────
-
+/**
+ * Wrapper for async route handlers to automatically catch errors and pass them to next().
+ * @param {function} fn - The async route handler.
+ */
 export function asyncHandler(
   fn: (req: Request, res: Response, next: NextFunction) => Promise<void>,
 ) {

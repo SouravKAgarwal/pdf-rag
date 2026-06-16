@@ -2,16 +2,16 @@ import { Worker, type Job } from "bullmq";
 import path from "path";
 import dotenv from "dotenv";
 import fs from "fs/promises";
-import { PDFParse } from "pdf-parse";
-import { Document } from "@langchain/core/documents";
 import { getVectorStore, indexingEmbeddings } from "./config/langchain.js";
+import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
+import { loadDocument } from "./services/pdfParser.js";
 import { db } from "./lib/db.js";
+
+import { Document } from "@langchain/core/documents";
 
 dotenv.config({ quiet: true });
 
-const PAGE_LIMIT = 100;
-
-// ── Job payload shape ─────────────────────────────────────────────────────────
+const PAGE_LIMIT = 200;
 
 interface FileJobData {
   filename: string;
@@ -21,43 +21,11 @@ interface FileJobData {
   documentId: string;
 }
 
-// ── Custom Loader (PDF only) ──────────────────────────────────────────────────
-
-async function loadPdfPages(filePath: string): Promise<Document[]> {
-  const parser = new PDFParse({
-    data: new Uint8Array(await fs.readFile(filePath)),
-  });
-  try {
-    const { pages } = await parser.getText();
-    return pages.map(
-      (page: any) =>
-        new Document({
-          pageContent: page.text,
-          metadata: { source: filePath, page: page.num - 1 },
-        }),
-    );
-  } finally {
-    await parser.destroy();
-  }
-}
-
-async function loadDocument(
-  filePath: string,
-  mimetype: string,
-): Promise<Document[]> {
-  const ext = path.extname(filePath).toLowerCase();
-
-  if (ext === ".pdf" || mimetype === "application/pdf") {
-    return await loadPdfPages(filePath);
-  }
-
-  throw new Error(
-    `Unsupported file type "${ext}". Only PDF files are supported.`,
-  );
-}
-
-// ── BullMQ Worker ─────────────────────────────────────────────────────────────
-
+/**
+ * Worker that handles background processing of uploaded files.
+ * It loads the document, splits it into chunks, generates embeddings,
+ * and stores them in Qdrant.
+ */
 const worker = new Worker(
   "file-upload-queue",
   async (job: Job) => {
@@ -82,19 +50,29 @@ const worker = new Worker(
     // 3. Attach metadata (userId, filename, documentId, totalPages) to every page
     //    and filter out empty pages
     const totalPages = docs.length;
-    const docsWithMeta = docs
+    let docsWithMeta: Document[] = docs
       .filter((doc) => doc.pageContent.trim().length > 0)
-      .map((doc) => ({
-        ...doc,
-        metadata: {
-          ...doc.metadata,
-          userId,
-          filename,
-          documentId, // ← enables per-document Qdrant filtering
-          totalPages,
-          processedAt: new Date().toISOString(),
-        },
-      }));
+      .map(
+        (doc) =>
+          new Document({
+            pageContent: doc.pageContent,
+            metadata: {
+              ...doc.metadata,
+              userId,
+              filename,
+              documentId,
+              totalPages,
+              processedAt: new Date().toISOString(),
+            },
+          }),
+      );
+
+    // Split text into more uniform chunks
+    const textSplitter = new RecursiveCharacterTextSplitter({
+      chunkSize: 1000,
+      chunkOverlap: 200,
+    });
+    docsWithMeta = await textSplitter.splitDocuments(docsWithMeta);
 
     await job.updateProgress(15);
 
@@ -145,6 +123,14 @@ const worker = new Worker(
       data: { status: "ready", pageCount: totalPages },
     });
 
+    // 6. Clean up file from disk
+    try {
+      await fs.unlink(filePath);
+      console.log(`   🗑️  Deleted file from disk: ${filePath}`);
+    } catch (err) {
+      console.error(`   ⚠️  Failed to delete file from disk: ${filePath}`, err);
+    }
+
     await job.updateProgress(100);
     console.log(`   ✅ ${filename} fully indexed (${totalPages} pages)\n`);
   },
@@ -157,7 +143,7 @@ const worker = new Worker(
   },
 );
 
-// ── Event logging ─────────────────────────────────────────────────────────────
+// Set up worker event listeners
 
 worker.on("completed", (job: Job) => {
   const data: FileJobData = JSON.parse(job.data as string);
@@ -171,6 +157,20 @@ worker.on("failed", async (job: Job | undefined, err: Error) => {
   if (job) {
     try {
       const data: FileJobData = JSON.parse(job.data as string);
+
+      // Clean up file from disk on failure too
+      try {
+        await fs.unlink(data.path);
+        console.log(
+          `   🗑️  Deleted file from disk (after failure): ${data.path}`,
+        );
+      } catch (err) {
+        console.error(
+          `   ⚠️  Failed to delete file from disk: ${data.path}`,
+          err,
+        );
+      }
+
       if (data.documentId) {
         await db.document.update({
           where: { id: data.documentId },

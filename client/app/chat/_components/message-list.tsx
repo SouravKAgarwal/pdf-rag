@@ -25,11 +25,11 @@ export interface Message {
 
 function TypingDots() {
   return (
-    <span className="inline-flex items-center gap-[3px] ml-0.5 translate-y-[1px]">
+    <span className="inline-flex items-center gap-0.75 ml-0.5 translate-y-px">
       {[0, 1, 2].map((i) => (
         <span
           key={i}
-          className="typing-dot w-[5px] h-[5px] rounded-full bg-muted-foreground/60 inline-block"
+          className="w-1.25 h-1.25 rounded-full bg-muted-foreground/60 inline-block animate-pulse"
           style={{ animationDelay: `${i * 0.2}s` }}
         />
       ))}
@@ -98,7 +98,7 @@ export function MessageList({ messages, activeDocument }: MessageListProps) {
 
   /* ── Message list ─────────────────────────────────────────────────────────── */
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-6">
+    <div className="flex-1 overflow-y-auto w-full mx-auto scrollbar-none px-4 py-6">
       <div className="max-w-3xl mx-auto space-y-5">
         {messages.map((message) => {
           const isUser = message.role === "user";
@@ -119,7 +119,7 @@ export function MessageList({ messages, activeDocument }: MessageListProps) {
                 ) : (
                   /* ── AI message ───────────────────────────────────────────── */
                   <div className="rounded-lg px-4 py-2.5 bg-muted">
-                    <div className="prose prose-sm max-w-none dark:prose-invert prose-p:leading-relaxed prose-p:whitespace-pre-wrap prose-li:whitespace-pre-wrap prose-pre:p-0 prose-code:before:content-none prose-code:after:content-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 text-foreground break-words">
+                    <div className="prose prose-sm max-w-none dark:prose-invert prose-p:leading-relaxed prose-p:whitespace-pre-wrap prose-li:whitespace-pre-wrap prose-pre:p-0 prose-code:before:content-none prose-code:after:content-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 text-foreground wrap-break-word">
                       {message.content ? (
                         <Markdown>{linkify(message.content)}</Markdown>
                       ) : null}
@@ -148,7 +148,7 @@ export function MessageList({ messages, activeDocument }: MessageListProps) {
                               title={filename}
                             >
                               <FileText size={10} className="shrink-0" />
-                              <span className="truncate max-w-[200px]">
+                              <span className="truncate max-w-50">
                                 {filename}
                               </span>
                             </Badge>

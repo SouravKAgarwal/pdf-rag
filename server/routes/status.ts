@@ -7,6 +7,10 @@ import { db } from "../lib/db.js";
 
 const router = Router();
 
+/**
+ * GET /status/:jobId
+ * Retrieves the current status and progress of a background file-processing job.
+ */
 router.get("/:jobId", verifyAuth, asyncHandler(async (req, res) => {
   const jobId = Array.isArray(req.params.jobId)
     ? req.params.jobId[0]
@@ -17,7 +21,6 @@ router.get("/:jobId", verifyAuth, asyncHandler(async (req, res) => {
     throw Errors.notFound(`Job not found: ${jobId}`);
   }
 
-  // Verify job belongs to requesting user
   const jobData = JSON.parse(job.data as string);
   const userId = getUserId(req);
   if (jobData.userId !== userId) {
@@ -27,7 +30,6 @@ router.get("/:jobId", verifyAuth, asyncHandler(async (req, res) => {
   const state = await job.getState();
   const progress = Number(job.progress) || 0;
 
-  // Fetch enriched info from DB (pageCount + errorMessage)
   let pageCount: number | null = null;
   let errorMessage: string | null = null;
 
@@ -38,9 +40,7 @@ router.get("/:jobId", verifyAuth, asyncHandler(async (req, res) => {
     });
     pageCount = doc?.pageCount ?? null;
     errorMessage = doc?.errorMessage ?? null;
-  } catch {
-    // non-fatal – just omit the extra fields
-  }
+  } catch {  }
 
   res.json({ state, progress, pageCount, errorMessage });
 }));
