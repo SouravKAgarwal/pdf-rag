@@ -6,9 +6,9 @@ import { UploadStage } from "../chat/_components/upload-stage";
 import { ProcessingStage } from "../chat/_components/processing-stage";
 import { ChatSidebar } from "../chat/_components/chat-sidebar";
 
-import { useDocuments, DocumentInfo } from "../../hooks/use-documents";
-import { useFileUpload } from "../../hooks/use-file-upload";
-import { useChatMessages } from "../../hooks/use-chat-messages";
+import { useDocuments, DocumentInfo } from "../../../hooks/use-documents";
+import { useFileUpload } from "../../../hooks/use-file-upload";
+import { useChatMessages } from "../../../hooks/use-chat-messages";
 
 export function UploadClient({
   initialDocuments,

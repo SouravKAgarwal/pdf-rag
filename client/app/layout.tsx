@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Roboto } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
+import { ThemeProvider } from "@/components/theme-provider";
 import Header from "./_components/header";
 
 const geistSans = Geist({
@@ -19,8 +20,6 @@ const inter = Roboto({
   subsets: ["latin"],
 });
 
-import { ThemeProvider } from "@/components/theme-provider";
-
 export const metadata: Metadata = {
   title: "PDF.ai — Chat with your PDFs",
   description: "Upload PDFs and chat with them using AI",
@@ -33,20 +32,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <ClerkProvider>
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} font-heading min-h-svh antialiased`}
-        >
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            {children}
-          </ThemeProvider>
-        </body>
-      </ClerkProvider>
+      {/* <ThemeProvider attribute="class" defaultTheme="system" enableSystem> */}
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} font-heading min-h-svh antialiased`}
+      >
+        <ClerkProvider>
+          <Header />
+          {children}
+        </ClerkProvider>
+      </body>
+      {/* </ThemeProvider> */}
     </html>
   );
 }

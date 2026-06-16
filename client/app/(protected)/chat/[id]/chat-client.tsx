@@ -8,8 +8,8 @@ import { ChatSidebar } from "../_components/chat-sidebar";
 import { ChatHeader } from "../_components/chat-header";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 
-import { useDocuments, DocumentInfo } from "../../../hooks/use-documents";
-import { useChatMessages } from "../../../hooks/use-chat-messages";
+import { useDocuments, DocumentInfo } from "../../../../hooks/use-documents";
+import { useChatMessages } from "../../../../hooks/use-chat-messages";
 
 export function ChatClient({
   activeDocumentId,

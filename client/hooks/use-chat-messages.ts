@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { parseSSEStream } from "../lib/sse";
-import type { Message, Source } from "../app/chat/_components/message-list";
+import type {
+  Message,
+  Source,
+} from "../app/(protected)/chat/_components/message-list";
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL;
 if (!BACKEND) {
@@ -17,7 +20,9 @@ type UseChatMessagesProps = {
  */
 export function useChatMessages({ activeDocumentId }: UseChatMessagesProps) {
   const { getToken } = useAuth();
-  const [messagesByDoc, setMessagesByDoc] = useState<Record<string, Message[]>>({});
+  const [messagesByDoc, setMessagesByDoc] = useState<Record<string, Message[]>>(
+    {},
+  );
   const messagesLoadedRef = useRef<Set<string>>(new Set());
   const [isStreaming, setIsStreaming] = useState(false);
 
@@ -65,21 +70,24 @@ export function useChatMessages({ activeDocumentId }: UseChatMessagesProps) {
     messagesLoadedRef.current.delete(docId);
   }, []);
 
-  const addWelcomeMessage = useCallback((docId: string, filename: string, pageCount: number | null) => {
-    const welcomeMsg: Message = {
-      id: `welcome-${Date.now()}`,
-      role: "assistant",
-      content: `**"${filename}"** has been analyzed and indexed successfully${
-        pageCount ? ` — ${pageCount} pages` : ""
-      }.\n\nI'm ready to answer questions about this document. Ask me anything!`,
-      sources: [],
-    };
-    setMessagesByDoc((prev) => ({
-      ...prev,
-      [docId]: [welcomeMsg],
-    }));
-    messagesLoadedRef.current.add(docId);
-  }, []);
+  const addWelcomeMessage = useCallback(
+    (docId: string, filename: string, pageCount: number | null) => {
+      const welcomeMsg: Message = {
+        id: `welcome-${Date.now()}`,
+        role: "assistant",
+        content: `**"${filename}"** has been analyzed and indexed successfully${
+          pageCount ? ` — ${pageCount} pages` : ""
+        }.\n\nI'm ready to answer questions about this document. Ask me anything!`,
+        sources: [],
+      };
+      setMessagesByDoc((prev) => ({
+        ...prev,
+        [docId]: [welcomeMsg],
+      }));
+      messagesLoadedRef.current.add(docId);
+    },
+    [],
+  );
 
   const handleSend = useCallback(
     async (query: string) => {
@@ -164,7 +172,8 @@ export function useChatMessages({ activeDocumentId }: UseChatMessagesProps) {
                 m.id === assistantId
                   ? {
                       ...m,
-                      content: (event.message as string) || "An error occurred.",
+                      content:
+                        (event.message as string) || "An error occurred.",
                       streaming: false,
                     }
                   : m,
@@ -179,7 +188,8 @@ export function useChatMessages({ activeDocumentId }: UseChatMessagesProps) {
             m.id === assistantId
               ? {
                   ...m,
-                  content: "Connection error. Please check the server and try again.",
+                  content:
+                    "Connection error. Please check the server and try again.",
                   streaming: false,
                 }
               : m,

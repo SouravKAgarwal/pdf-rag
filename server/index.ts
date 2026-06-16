@@ -3,7 +3,6 @@ import cors from "cors";
 import bodyParser from "body-parser";
 import dotenv from "dotenv";
 import { clerkMiddleware } from "@clerk/express";
-
 import uploadRouter from "./routes/upload.js";
 import statusRouter from "./routes/status.js";
 import chatRouter from "./routes/chat.js";

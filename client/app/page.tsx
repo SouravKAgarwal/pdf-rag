@@ -2,15 +2,13 @@ import { Button } from "@/components/ui/button";
 import { Show } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
-import Header from "./_components/header";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "AI PDF Ly - Chat with any PDF document",
-  description: "Upload your PDF documents and ask questions, get summaries, and extract information instantly using AI.",
+  description:
+    "Upload your PDF documents and ask questions, get summaries, and extract information instantly using AI.",
 };
-
-export const dynamic = 'force-static';
 
 const USERS_PIC = [
   { src: "/assets/rita.jpg" },
@@ -23,7 +21,6 @@ const USERS_PIC = [
 export default function Home() {
   return (
     <>
-      <Header />
       <section className="p-6 md:p-32 bg-[#062427] min-h-svh text-white">
         <div className="flex flex-col max-w-187.5 gap-6">
           <h1 className="text-5xl font-medium font-serif">

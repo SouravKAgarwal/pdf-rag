@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from "express";
 import { verifyAuth, getUserId } from "../middlewares/auth.js";
 import { db } from "../lib/db.js";
-import { searchRelevantChunks } from "../services/qdrant.js";
+import { searchRelevantChunks } from "../services/pinecone.js";
 import { streamChatResponse } from "../services/chatService.js";
 import dotenv from "dotenv";
 
@@ -64,8 +64,8 @@ router.post("/", verifyAuth, async (req: Request, res: Response) => {
   }
 
   try {
-    // 1. Retrieve the most relevant chunks from Qdrant via RAG
-    const relevantDocs = await searchRelevantChunks(userId, documentId, query);
+    // 1. Retrieve the most relevant chunks from Pinecone via RAG
+    const relevantDocs = await searchRelevantChunks(userId, documentId, query, 100);
 
     if (relevantDocs.length === 0) {
       sendEvent({ type: "sources", sources: [] });

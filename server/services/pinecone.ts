@@ -8,22 +8,20 @@ import { Document } from "@langchain/core/documents";
  * @param {string} userId - The ID of the authenticated user.
  * @param {string} documentId - The ID of the document to search within.
  * @param {string} query - The search query.
- * @param {number} [k=10] - The number of relevant chunks to retrieve.
+ * @param {number} [k=1000] - The number of relevant chunks to retrieve.
  * @returns {Promise<Document[]>} A promise that resolves to the most relevant document chunks.
  */
 export async function searchRelevantChunks(
   userId: string,
   documentId: string,
   query: string,
-  k: number = 10,
+  k: number = 1000,
 ): Promise<Document[]> {
   const vectorStore = await getVectorStore();
 
   const results = await vectorStore.similaritySearch(query, k, {
-    must: [
-      { key: "metadata.userId", match: { value: userId } },
-      { key: "metadata.documentId", match: { value: documentId } },
-    ],
+    userId,
+    documentId,
   });
 
   return results;

@@ -1,17 +1,16 @@
 import { Worker, type Job } from "bullmq";
-import path from "path";
+import IORedis from "ioredis";
 import dotenv from "dotenv";
 import fs from "fs/promises";
-import { getVectorStore, indexingEmbeddings } from "./config/langchain.js";
+import { getVectorStore } from "./config/langchain.js";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { loadDocument } from "./services/pdfParser.js";
 import { db } from "./lib/db.js";
-
 import { Document } from "@langchain/core/documents";
 
 dotenv.config({ quiet: true });
 
-const PAGE_LIMIT = 200;
+const PAGE_LIMIT = 500;
 
 interface FileJobData {
   filename: string;
@@ -24,7 +23,7 @@ interface FileJobData {
 /**
  * Worker that handles background processing of uploaded files.
  * It loads the document, splits it into chunks, generates embeddings,
- * and stores them in Qdrant.
+ * and stores them in Pinecone.
  */
 const worker = new Worker(
   "file-upload-queue",
@@ -76,47 +75,18 @@ const worker = new Worker(
 
     await job.updateProgress(15);
 
-    // 4. Embed chunks and store in Qdrant in batches of 10
-    //    (smaller batches to stay within Gemini rate limits)
+    // 4. Embed chunks and store in Pinecone
+
     const vectorStore = await getVectorStore();
-    const BATCH = 10;
-    const total = docsWithMeta.length;
-    let processed = 0;
-
-    for (let i = 0; i < total; i += BATCH) {
-      const batch = docsWithMeta.slice(i, i + BATCH);
-
-      const texts = batch.map((d) => d.pageContent);
-      const embeddings = await indexingEmbeddings.embedDocuments(texts);
-
-      const validEmbeddings: number[][] = [];
-      const validDocs: Document[] = [];
-
-      for (let j = 0; j < embeddings.length; j++) {
-        if (embeddings[j] && embeddings[j].length > 0) {
-          validEmbeddings.push(embeddings[j]);
-          validDocs.push(batch[j]);
-        } else {
-          console.warn(
-            `   ⚠️  Skipped chunk due to empty embedding API response`,
-          );
-        }
-      }
-
-      if (validDocs.length > 0) {
-        await vectorStore.addVectors(validEmbeddings, validDocs);
-      }
-
-      processed += batch.length;
-      // Progress: 15 → 95 during embedding phase
-      const progress = 15 + Math.min((processed / total) * 80, 80);
-      await job.updateProgress(progress);
-
-      console.log(
-        `   ⚙️  Embedded ${processed}/${total} chunks (${progress.toFixed(1)}%)`,
-      );
+    
+    console.log(`Embedding and upserting ${docsWithMeta.length} chunks to Pinecone...`);
+    try {
+      await vectorStore.addDocuments(docsWithMeta);
+    } catch (err: any) {
+      throw err;
     }
-
+    
+    await job.updateProgress(95);
     // 5. Update DB: mark document as ready with page count
     await db.document.update({
       where: { id: documentId },
@@ -126,20 +96,22 @@ const worker = new Worker(
     // 6. Clean up file from disk
     try {
       await fs.unlink(filePath);
-      console.log(`   🗑️  Deleted file from disk: ${filePath}`);
+      console.log(`Deleted file from disk: ${filePath}`);
     } catch (err) {
-      console.error(`   ⚠️  Failed to delete file from disk: ${filePath}`, err);
+      console.error(`Failed to delete file from disk: ${filePath}`, err);
     }
 
     await job.updateProgress(100);
-    console.log(`   ✅ ${filename} fully indexed (${totalPages} pages)\n`);
+    console.log(`${filename} fully indexed (${totalPages} pages)\n`);
   },
   {
     concurrency: 5,
-    connection: {
-      host: process.env.REDIS_HOST ?? "localhost",
-      port: Number(process.env.REDIS_PORT ?? 6379),
-    },
+    connection: (process.env.REDIS_URL
+      ? new IORedis(process.env.REDIS_URL, { maxRetriesPerRequest: null })
+      : {
+          host: process.env.REDIS_HOST ?? "localhost",
+          port: Number(process.env.REDIS_PORT ?? 6379),
+        }) as any,
   },
 );
 

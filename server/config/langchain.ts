@@ -1,34 +1,11 @@
 import { Embeddings } from "@langchain/core/embeddings";
-import { GoogleGenAI, HarmBlockThreshold, HarmCategory } from "@google/genai";
-import { QdrantVectorStore } from "@langchain/qdrant";
+import { GoogleGenAI } from "@google/genai";
+import { PineconeStore } from "@langchain/pinecone";
+import { Pinecone } from "@pinecone-database/pinecone";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import dotenv from "dotenv";
 
 dotenv.config({ quiet: true });
-
-const COLLECTION_NAME = "pdf-ai-docs";
-const VECTOR_SIZE = 3072;
-
-const safetySettings = [
-  {
-    category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-    threshold: HarmBlockThreshold.BLOCK_NONE,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-    threshold: HarmBlockThreshold.BLOCK_NONE,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-    threshold: HarmBlockThreshold.BLOCK_NONE,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-    threshold: HarmBlockThreshold.BLOCK_NONE,
-  },
-];
-
-// --- Embeddings ---
 
 const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_GEMINI_API_KEY });
 
@@ -125,69 +102,35 @@ export class SafeGoogleEmbeddings extends Embeddings {
   }
 }
 
-/** Used when indexing documents (at ingest time) */
+/**
+ * Used when indexing documents (at ingest time)
+ */
 export const indexingEmbeddings = new SafeGoogleEmbeddings({});
 
 /** Used when embedding a user query (at query time) */
 export const queryEmbeddings = new SafeGoogleEmbeddings({});
 
-// --- Text Splitter ---
-
 export const splitter = new RecursiveCharacterTextSplitter({
-  chunkSize: 1000, // was 100 – meaningful paragraph-level chunks
-  chunkOverlap: 200, // overlap to preserve sentence continuity
+  chunkSize: 1000,
+  chunkOverlap: 200,
 });
 
-// --- Qdrant Collection Auto-Bootstrap ---
-
-async function ensureCollectionExists(): Promise<void> {
-  if (!process.env.QDRANT_URL) {
-    throw new Error("QDRANT_URL environment variable is not defined");
+/**
+ * Returns a PineconeStore connected to the shared pdf-ai-docs index.
+ */
+export async function getVectorStore(): Promise<PineconeStore> {
+  if (!process.env.PINECONE_API_KEY) {
+    throw new Error("PINECONE_API_KEY environment variable is not defined");
   }
-  const baseUrl = process.env.QDRANT_URL.replace(
-    /\/$/,
-    "",
-  );
 
-  // Check if collection already exists
-  const checkRes = await fetch(`${baseUrl}/collections/${COLLECTION_NAME}`);
-  if (checkRes.ok) return; // already exists
-
-  // Create collection with correct vector size
-  const createRes = await fetch(`${baseUrl}/collections/${COLLECTION_NAME}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      vectors: {
-        size: VECTOR_SIZE,
-        distance: "Cosine",
-      },
-    }),
+  const pc = new Pinecone({
+    apiKey: process.env.PINECONE_API_KEY,
   });
 
-  if (!createRes.ok) {
-    const body = await createRes.text();
-    throw new Error(
-      `Failed to create Qdrant collection "${COLLECTION_NAME}": ${body}`,
-    );
-  }
+  const pineconeIndex = pc.Index("pdf-ai-docs");
 
-  console.log(
-    `✅ Qdrant collection "${COLLECTION_NAME}" created (dim=${VECTOR_SIZE})`,
-  );
-}
-
-// --- Vector Store Factory ---
-
-/**
- * Returns a QdrantVectorStore connected to the shared pdf-ai-docs collection.
- * Automatically creates the collection on first call if it doesn't exist yet.
- */
-export async function getVectorStore(): Promise<QdrantVectorStore> {
-  await ensureCollectionExists();
-
-  return await QdrantVectorStore.fromExistingCollection(indexingEmbeddings, {
-    url: process.env.QDRANT_URL!,
-    collectionName: COLLECTION_NAME,
+  return new PineconeStore(indexingEmbeddings, {
+    pineconeIndex,
+    maxConcurrency: 5,
   });
 }
