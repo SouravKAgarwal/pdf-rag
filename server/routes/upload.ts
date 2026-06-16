@@ -8,6 +8,10 @@ import crypto from "crypto";
 
 const router = Router();
 
+/**
+ * POST /uploads
+ * Handles file uploads, stores metadata in the database, and queues a job for processing.
+ */
 router.post(
   "/",
   verifyAuth,
@@ -20,15 +24,14 @@ router.post(
 
     const userId = getUserId(req);
 
-    // ── Create a placeholder Document row first (id is needed for job payload) ─
-
+    // Create a placeholder Document row first (id is needed for job payload)
     const document = await db.document.create({
       data: {
         userId,
         filename: file.originalname,
         size: file.size,
         mimeType: file.mimetype,
-        jobId: `pending-${crypto.randomUUID()}`,   // updated below once we have the real job id
+        jobId: `pending-${crypto.randomUUID()}`, // updated below once we have the real job id
         status: "processing",
       },
     });
@@ -45,8 +48,7 @@ router.post(
       { jobId: crypto.randomUUID() }
     );
 
-    // ── Patch document with real job id ───────────────────────────────────────
-
+    // Patch document with real job id
     await db.document.update({
       where: { id: document.id },
       data: { jobId: job.id! },

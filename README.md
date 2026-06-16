@@ -1,84 +1,97 @@
-# AI PDF.ly
+# AI PDF Ly
 
-AI PDF.ly is an AI-powered web application that enables users to query and interact with PDF documents using natural language. Built with Next.js for the frontend and Node.js for the backend, it leverages modern vector databases and caching for fast, intelligent document search and Q&A.
+AI PDF Ly is a full-stack application that allows users to upload PDF documents and interact with them using AI. It uses modern embeddings and language models to enable semantic search, document summarization, and instant answers backed by citations.
 
 ## Features
-
-- **PDF Upload:** Easily upload PDF documents for processing.
-- **AI-Powered Search:** Ask questions about your PDFs and get instant, context-aware answers.
-- **Citations:** Responses include cited sources from your documents.
-- **User Authentication:** Secure sign-in and sign-up flows powered by Clerk.
-- **Scalable Backend:** Uses Qdrant for vector search and Valkey (Redis-compatible) for caching.
+- **Upload PDF Documents**: Securely upload and store your PDF files.
+- **Instant AI Chat**: Ask questions and get answers directly from your documents.
+- **Source Citations**: Every response includes references to the original document.
+- **Secure Authentication**: Built-in user authentication using Clerk.
 
 ## Tech Stack
 
-- **Frontend:** Next.js, Clerk, Tailwind CSS
-- **Backend:** Node.js, LangChain
-- **Vector DB:** Qdrant
-- **Cache:** Valkey (Redis-compatible)
-- **Containerization:** Docker Compose
+### Frontend (Client)
+- **Framework**: [Next.js](https://nextjs.org/) (App Router, Server Components)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) & [shadcn/ui](https://ui.shadcn.com/)
+- **Authentication**: [Clerk](https://clerk.com/)
+
+### Backend (Server)
+- **Framework**: Node.js & [Express.js](https://expressjs.com/)
+- **AI & Embeddings**: [Langchain](https://js.langchain.com/) & [Google Gemini](https://ai.google.dev/)
+- **Vector Database**: [Qdrant](https://qdrant.tech/)
+- **Database**: PostgreSQL (via [Prisma](https://www.prisma.io/))
+
+---
 
 ## Getting Started
 
 ### Prerequisites
-
-- [Node.js](https://nodejs.org/)
+- Node.js (v18+)
 - [pnpm](https://pnpm.io/)
-- [Docker](https://www.docker.com/)
+- A Qdrant instance (local or cloud)
+- A Google Gemini API Key
+- A Clerk Account (for authentication)
+- A PostgreSQL database
 
 ### Installation
 
 1. **Clone the repository:**
-   ```sh
-   https://github.com/SouravKAgarwal/pdf-rag.git
-   cd pdf-rag
+   ```bash
+   git clone <repository-url>
+   cd ai-pdf-ly
    ```
 
 2. **Install dependencies:**
-   ```sh
-    pnpm install
-   ```
-
-3. **Start services with Docker Compose:**
-   ```sh
-   docker-compose up -d
-   ```
-
-4. **Run the development servers:**
-   ```sh
-   pnpm dev
+   This project uses a monorepo structure (or separate client/server folders).
+   ```bash
+   # Install client dependencies
+   cd client
+   pnpm install
+   
+   # Install server dependencies
+   cd ../server
+   pnpm install
    ```
 
 ### Environment Variables
 
-- Configure `.env` files in both `client` and `server` folders for API keys and service URLs.
+You need to configure the environment variables for both the client and the server.
 
-- client `.env`
-    ```sh
-    NEXT_PUBLIC_BACKEND_URL = "http://localhost:8000"
-    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=""
-    CLERK_SECRET_KEY=""
-    ```
-
-- server `.env`
-    ```sh
-    QDRANT_URL="http://localhost:6333"
-    GOOGLE_GEMINI_API_KEY = ""
-    ```
-
-## Project Structure
-
-```
-pdf-rag/
-├── client/      # Next.js frontend
-├── server/      # Node.js backend
-├── docker-compose.yml
+**Client (`client/.env`)**
+```env
+NEXT_PUBLIC_BACKEND_URL="http://localhost:8000"
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="<your-clerk-publishable-key>"
+CLERK_SECRET_KEY="<your-clerk-secret-key>"
 ```
 
-## Contributing
+**Server (`server/.env`)**
+```env
+PORT=8000
+ALLOWED_ORIGINS="http://localhost:3000"
+QDRANT_URL="http://localhost:6333"
+GOOGLE_GEMINI_API_KEY="<your-gemini-api-key>"
+CLERK_PUBLISHABLE_KEY="<your-clerk-publishable-key>"
+CLERK_SECRET_KEY="<your-clerk-secret-key>"
+DATABASE_URL="<your-postgresql-database-url>"
+```
 
-Contributions are welcome! Please open issues or submit pull requests.
+### Running the Application
+
+1. **Start the Express backend:**
+   ```bash
+   cd server
+   pnpm run dev
+   ```
+
+2. **Start the Next.js frontend:**
+   Open a new terminal window:
+   ```bash
+   cd client
+   pnpm run dev
+   ```
+
+3. **Open the app:**
+   Navigate to `http://localhost:3000` in your browser.
 
 ## License
-
-This project is licensed under the ISC License.
+MIT

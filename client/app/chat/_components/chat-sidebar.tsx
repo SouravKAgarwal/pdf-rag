@@ -10,7 +10,6 @@ import {
   AlertCircle,
   MoreHorizontal,
 } from "lucide-react";
-import { IconInnerShadowTop } from "@tabler/icons-react";
 import { useUser } from "@clerk/nextjs";
 
 import {

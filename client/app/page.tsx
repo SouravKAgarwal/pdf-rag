@@ -3,6 +3,14 @@ import { Show } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
 import Header from "./_components/header";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "AI PDF Ly - Chat with any PDF document",
+  description: "Upload your PDF documents and ask questions, get summaries, and extract information instantly using AI.",
+};
+
+export const dynamic = 'force-static';
 
 const USERS_PIC = [
   { src: "/assets/rita.jpg" },
@@ -45,7 +53,7 @@ export default function Home() {
               className="bg-amber-600 text-white hover:bg-amber-700 font-semibold"
               asChild
             >
-              <Link href="/chat">Upload PDF</Link>
+              <Link href="/upload">Upload PDF</Link>
             </Button>
           </Show>
         </div>

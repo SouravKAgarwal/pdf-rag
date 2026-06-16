@@ -22,7 +22,7 @@ enum MsgRole {
 // ── Models ─────────────────────────────────────────────────────────────────────
 
 model Document {
-  id           String        @id @default(cuid())
+  id           String        @id @default(uuid()) @db.Uuid
   userId       String
   filename     String
   size         Int
@@ -39,8 +39,8 @@ model Document {
 }
 
 model ChatMessage {
-  id         String   @id @default(cuid())
-  documentId String
+  id         String   @id @default(uuid()) @db.Uuid
+  documentId String   @db.Uuid
   document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
   role       MsgRole
   content    String

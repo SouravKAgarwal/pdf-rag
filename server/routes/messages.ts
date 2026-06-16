@@ -5,8 +5,10 @@ import { db } from "../lib/db.js";
 
 const router = Router();
 
-// ── Get all chat messages for a document ─────────────────────────────────────
-
+/**
+ * GET /messages/:documentId
+ * Retrieves all chat messages associated with a specific document for the authenticated user.
+ */
 router.get("/:documentId", verifyAuth, asyncHandler(async (req, res) => {
   const userId = getUserId(req);
   const documentId = Array.isArray(req.params.documentId)

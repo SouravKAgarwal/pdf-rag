@@ -141,7 +141,10 @@ export const splitter = new RecursiveCharacterTextSplitter({
 // --- Qdrant Collection Auto-Bootstrap ---
 
 async function ensureCollectionExists(): Promise<void> {
-  const baseUrl = (process.env.QDRANT_URL ?? "http://localhost:6333").replace(
+  if (!process.env.QDRANT_URL) {
+    throw new Error("QDRANT_URL environment variable is not defined");
+  }
+  const baseUrl = process.env.QDRANT_URL.replace(
     /\/$/,
     "",
   );

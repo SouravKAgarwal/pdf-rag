@@ -40,16 +40,15 @@ export default function ChatInput({
   };
 
   return (
-    <div className="w-full">
-      <div className="mx-auto w-full max-w-3xl pt-0.5">
-
+    <div className="w-full pb-4">
+      <div className="mx-auto w-full max-w-210">
         <div
           className={[
-            "rounded-xl border transition-all duration-200",
-            "p-2 pb-0.5",
+            "rounded-[28px] transition-all duration-200 border shadow-lg",
+            "p-2 flex items-end gap-2",
             disabled
-              ? "border-border bg-muted/30"
-              : "border-border bg-background focus-within:ring-1 focus-within:ring-ring shadow-sm",
+              ? "border-border/50 bg-muted/30 cursor-not-allowed"
+              : "border-border/40 bg-sidebar/60 backdrop-blur-md focus-within:bg-sidebar focus-within:ring-1 focus-within:ring-border hover:bg-sidebar/80",
           ].join(" ")}
         >
           <textarea
@@ -61,42 +60,32 @@ export default function ChatInput({
               disabled
                 ? "Waiting for document to be ready…"
                 : documentName
-                ? `Ask about "${documentName}"…`
-                : "Ask about your document…"
+                  ? `Ask about "${documentName}"…`
+                  : "Ask about your document…"
             }
             disabled={disabled}
             rows={1}
-            className="w-full resize-none border-none bg-transparent pr-12 text-[14px] text-foreground outline-none placeholder:text-muted-foreground/50 max-h-25 overflow-y-auto leading-relaxed no-scrollbar"
+            className="flex-1 resize-none border-none bg-transparent px-3 py-2 text-[15px] text-foreground outline-none placeholder:text-muted-foreground/60 max-h-24 overflow-y-auto leading-relaxed no-scrollbar"
           />
 
-          <div className="flex items-center justify-between mt-1.5">
-            <span className="text-[10px] text-muted-foreground/40 select-none">
-              ↵ Enter to send · Shift+↵ for new line
-            </span>
-            <Button
-              size="icon"
-              disabled={!canSend}
-              onClick={onSend}
-              className={[
-                "h-8 w-8 rounded-lg",
-                canSend
-                  ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
-                  : "bg-muted text-muted-foreground cursor-not-allowed",
-              ].join(" ")}
-            >
-              {isStreaming ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Send className="h-3.5 w-3.5" />
-              )}
-            </Button>
-          </div>
+          <Button
+            size="icon"
+            disabled={!canSend}
+            onClick={onSend}
+            className={[
+              "h-10 w-10 rounded-full shrink-0 mb-0.5 mr-0.5 transition-transform active:scale-95",
+              canSend
+                ? "bg-primary text-primary-foreground shadow-md hover:bg-primary/90"
+                : "bg-muted text-muted-foreground cursor-not-allowed",
+            ].join(" ")}
+          >
+            {isStreaming ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4 ml-0.5" />
+            )}
+          </Button>
         </div>
-
-        {/* Disclaimer */}
-        <p className="mt-2 text-center text-[10px] text-muted-foreground/40 select-none">
-          Responses are based solely on your uploaded document content.
-        </p>
       </div>
     </div>
   );
