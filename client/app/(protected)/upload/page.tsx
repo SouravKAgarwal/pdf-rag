@@ -1,7 +1,8 @@
 import { auth } from "@clerk/nextjs/server";
 import { UploadClient } from "./upload-client";
 import { redirect } from "next/navigation";
-import { Metadata } from "next";
+import type { Metadata } from "next";
+import { Suspense } from "react";
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -12,7 +13,9 @@ export const metadata: Metadata = {
 
 async function getDocuments() {
   if (!BACKEND) {
-    throw new Error("NEXT_PUBLIC_BACKEND_URL is not defined in the environment.");
+    throw new Error(
+      "NEXT_PUBLIC_BACKEND_URL is not defined in the environment.",
+    );
   }
 
   const { getToken, userId } = await auth();
@@ -42,8 +45,21 @@ async function getDocuments() {
   }));
 }
 
-export default async function UploadPage() {
+async function UploadContent() {
   const initialDocuments = await getDocuments();
-
   return <UploadClient initialDocuments={initialDocuments} />;
+}
+
+export default function UploadPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="h-full flex items-center justify-center p-8">
+          <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+        </div>
+      }
+    >
+      <UploadContent />
+    </Suspense>
+  );
 }

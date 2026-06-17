@@ -1,14 +1,16 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { UploadStage } from "../chat/_components/upload-stage";
-import { ProcessingStage } from "../chat/_components/processing-stage";
-import { ChatSidebar } from "../chat/_components/chat-sidebar";
-
-import { useDocuments, DocumentInfo } from "../../../hooks/use-documents";
-import { useFileUpload } from "../../../hooks/use-file-upload";
-import { useChatMessages } from "../../../hooks/use-chat-messages";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { useDocuments, DocumentInfo } from "@/hooks/use-documents";
+import { useFileUpload } from "@/hooks/use-file-upload";
+import { useChatMessages } from "@/hooks/use-chat-messages";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { ProcessingStage } from "@/components/chat/processing-stage";
+import { UploadStage } from "@/components/chat/upload-stage";
+import { ChatSidebar } from "@/components/chat/chat-sidebar";
+import { FileUp } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 export function UploadClient({
   initialDocuments,
@@ -39,27 +41,39 @@ export function UploadClient({
   });
 
   const onRemoveDocument = (id: string) => {
-    handleRemoveDocument(id, (deletedId, remainingDocs) => {
-      // Nothing special to do here since we are already on the upload page
+    handleRemoveDocument(id, () => {
+      // Already on upload page — nothing extra needed
     });
   };
 
   const renderContent = () => {
     if (uploadStage === "uploading") {
       return (
-        <div className="flex flex-1 items-center justify-center bg-background">
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-muted border flex items-center justify-center">
-              <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+        <div className="flex flex-1 flex-col items-center justify-center gap-6 bg-background px-4">
+          {/* Animated upload orb */}
+          <div className="relative">
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-50 dark:from-amber-900/40 dark:to-orange-900/20 border border-amber-200/60 dark:border-amber-700/30 flex items-center justify-center shadow-md">
+              <FileUp className="h-9 w-9 text-amber-600 dark:text-amber-400" />
             </div>
-            <div className="text-center">
-              <p className="text-foreground font-semibold text-sm">
-                Uploading {activeFile?.name}
-              </p>
-              <p className="text-muted-foreground text-xs mt-1">
-                Securely transferring your document…
-              </p>
-            </div>
+            {/* Spinning ring */}
+            <div className="absolute inset-0 rounded-2xl border-2 border-t-amber-500 border-r-amber-400/50 border-b-transparent border-l-transparent animate-spin" />
+          </div>
+
+          <div className="text-center space-y-1.5">
+            <p className="text-base font-semibold text-foreground">
+              Uploading{" "}
+              <span className="text-amber-600 dark:text-amber-400 font-bold">
+                {activeFile?.name}
+              </span>
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Securely transferring your document…
+            </p>
+          </div>
+
+          {/* Shimmer progress bar */}
+          <div className="w-48 h-1.5 rounded-full bg-muted overflow-hidden">
+            <div className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-400 animate-pulse" style={{ width: "60%" }} />
           </div>
         </div>
       );
@@ -109,8 +123,13 @@ export function UploadClient({
         onRemove={onRemoveDocument}
       />
       <SidebarInset>
-        <header className="flex h-12 shrink-0 items-center justify-between gap-2 border-b px-4">
-          <h1 className="font-semibold text-sm">Upload Document</h1>
+        <header className="flex h-(--header-height) shrink-0 items-center justify-between gap-2 border-b border-border/50 bg-background/80 backdrop-blur-sm px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
+          <div className="flex items-center gap-2">
+            <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
+            <Separator orientation="vertical" className="h-6 mx-2" />
+            <h1 className="font-semibold text-sm text-foreground">Upload Document</h1>
+          </div>
+          <ThemeToggle />
         </header>
         <div className="flex flex-1 flex-col overflow-hidden">
           {renderContent()}

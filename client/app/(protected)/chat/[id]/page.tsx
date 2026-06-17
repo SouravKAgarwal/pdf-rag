@@ -50,13 +50,22 @@ export async function generateMetadata(
   };
 }
 
-export default async function ChatPage({
+import { Suspense } from "react";
+
+async function ChatContent({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const initialDocuments = await getDocuments();
+  return <ChatClient activeDocumentId={id} initialDocuments={initialDocuments} />;
+}
+
+export default function ChatPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
-  const initialDocuments = await getDocuments();
-
-  return <ChatClient activeDocumentId={id} initialDocuments={initialDocuments} />;
+  return (
+    <Suspense fallback={<div className="h-full flex items-center justify-center p-8"><div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div>}>
+      <ChatContent params={params} />
+    </Suspense>
+  );
 }

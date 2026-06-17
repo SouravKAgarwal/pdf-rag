@@ -5,8 +5,14 @@
   "type": "module",
   "main": "index.ts",
   "scripts": {
-    "start": "concurrently -n \"BACKEND,WORKER\" -c \"blue,green\" \"tsx index.ts\" \"tsx worker.ts\"",
-    "dev": "concurrently -n \"BACKEND,WORKER\" -c \"blue,green\" \"tsx watch --ignore uploads --clear-screen=false index.ts\" \"tsx watch --ignore uploads --clear-screen=false worker.ts\""
+    "dev:server": "tsx watch index.ts",
+    "dev:worker": "tsx watch worker.ts",
+    "dev": "concurrently \"pnpm dev:server\" \"pnpm dev:worker\"",
+    "build": "tsup index.ts worker.ts --format esm --clean",
+    "start:server": "node dist/index.js",
+    "start:worker": "node dist/worker.js",
+    "start": "concurrently \"pnpm start:server\" \"pnpm start:worker\"",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [],
   "author": "Sourav Kumar Agarwal",
@@ -38,6 +44,7 @@
     "@types/node": "^25.9.3",
     "concurrently": "^10.0.3",
     "prisma": "^7.8.0",
+    "tsup": "^8.5.1",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3"
   }

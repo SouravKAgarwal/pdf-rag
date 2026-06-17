@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { MessageList } from "../_components/message-list";
-import ChatInput from "../_components/chat-input";
-import { ChatSidebar } from "../_components/chat-sidebar";
-import { ChatHeader } from "../_components/chat-header";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 
 import { useDocuments, DocumentInfo } from "../../../../hooks/use-documents";
 import { useChatMessages } from "../../../../hooks/use-chat-messages";
+import { ChatSidebar } from "@/components/chat/chat-sidebar";
+import { ChatHeader } from "@/components/chat/chat-header";
+import { MessageList } from "@/components/chat/message-list";
+import ChatInput from "@/components/chat/chat-input";
 
 export function ChatClient({
   activeDocumentId,

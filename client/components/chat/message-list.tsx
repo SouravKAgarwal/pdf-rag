@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Markdown from "markdown-to-jsx";
-import { FileText, Bot } from "lucide-react";
+import { FileText, Bot, Check, Copy } from "lucide-react";
+import { codeToHtml } from "shiki";
+import { useTheme } from "next-themes";
 import { Badge } from "@/components/ui/badge";
 import type { DocumentInfo } from "./chat-sidebar";
 
@@ -44,25 +46,98 @@ interface MessageListProps {
   activeDocument?: DocumentInfo;
 }
 
-/* ── Component ──────────────────────────────────────────────────────────────── */
+/* ── Code Block Component ───────────────────────────────────────────────────── */
 
-function linkify(text: string) {
-  if (!text) return text;
-  const urlRegex = /https?:\/\/[^\s<]+/g;
-  return text.replace(urlRegex, (url, offset, string) => {
-    const before = string.slice(Math.max(0, offset - 2), offset);
-    if (before === "](" || before === '="') {
-      return url;
+function CodeBlock({ children, ...props }: any) {
+  const [copied, setCopied] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [html, setHtml] = useState<string>("");
+  const { resolvedTheme } = useTheme();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const extractText = (node: any): string => {
+    if (typeof node === "string") return node;
+    if (Array.isArray(node)) return node.map(extractText).join("");
+    if (node && node.props && node.props.children) {
+      return extractText(node.props.children);
     }
-    let cleanUrl = url;
-    let trailing = "";
-    if (/[.,;:]$/.test(cleanUrl)) {
-      trailing = cleanUrl.slice(-1);
-      cleanUrl = cleanUrl.slice(0, -1);
+    return "";
+  };
+
+  const textToCopy = extractText(children);
+
+  let language = "text";
+  if (children && children.props && children.props.className) {
+    const match = children.props.className.match(/lang-(\w+)/);
+    if (match) {
+      language = match[1];
     }
-    return `[${cleanUrl}](${cleanUrl})${trailing}`;
-  });
+  }
+
+  useEffect(() => {
+    let isMounted = true;
+    async function highlight() {
+      try {
+        const result = await codeToHtml(textToCopy, {
+          lang: language === "text" ? "text" : language,
+          theme: resolvedTheme === "dark" ? "github-dark" : "github-light",
+        });
+        if (isMounted) setHtml(result);
+      } catch (e) {
+        if (isMounted)
+          setHtml(
+            `<pre class="shiki p-4 text-[13px] leading-relaxed overflow-x-auto"><code>${textToCopy}</code></pre>`,
+          );
+      }
+    }
+    highlight();
+    return () => {
+      isMounted = false;
+    };
+  }, [textToCopy, language, resolvedTheme]);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(textToCopy);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="group relative my-4 flex flex-col overflow-hidden rounded-lg border border-border/50 bg-background">
+      <div className="flex items-center justify-between bg-background/50 px-3 py-1.5 text-xs text-muted-foreground border-b border-border">
+        <span className="font-mono">
+          {language === "text" ? "shell" : language}
+        </span>
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1.5 rounded-md px-2 py-1 transition-colors hover:bg-foreground/10 hover:text-foreground"
+          aria-label="Copy code"
+        >
+          {copied ? <Check size={14} /> : <Copy size={14} />}
+          <span>{copied ? "Copied!" : "Copy"}</span>
+        </button>
+      </div>
+      {html ? (
+        <div
+          className="[&>pre]:!m-0 [&>pre]:!bg-transparent [&>pre]:p-4 [&>pre]:font-medium [&>pre]:text-[15.5px] [&>pre]:leading-relaxed [&>pre]:overflow-x-auto"
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+      ) : (
+        <pre
+          className="!m-0 overflow-x-auto p-4 text-[13px] leading-relaxed !bg-transparent !border-0"
+          {...props}
+        >
+          {children}
+        </pre>
+      )}
+    </div>
+  );
 }
+
+/* ── Component ──────────────────────────────────────────────────────────────── */
 
 export function MessageList({ messages, activeDocument }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -119,9 +194,19 @@ export function MessageList({ messages, activeDocument }: MessageListProps) {
                 ) : (
                   /* ── AI message ───────────────────────────────────────────── */
                   <div className="rounded-lg px-4 py-2.5 bg-muted">
-                    <div className="prose prose-sm max-w-none dark:prose-invert prose-p:leading-relaxed prose-p:whitespace-pre-wrap prose-li:whitespace-pre-wrap prose-pre:p-0 prose-code:before:content-none prose-code:after:content-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 text-foreground wrap-break-word">
+                    <div className="prose prose-sm max-w-none dark:prose-invert prose-p:leading-relaxed prose-p:whitespace-pre-wrap prose-li:whitespace-pre-wrap prose-code:before:content-none prose-code:after:content-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 text-foreground wrap-break-word [&_code:not(pre_code)]:bg-background/50 [&_code:not(pre_code)]:px-1.5 [&_code:not(pre_code)]:py-1.5 [&_code:not(pre_code)]:rounded-md [&_code:not(pre_code)]:font-mono [&_code:not(pre_code)]:text-xs [&_code:not(pre_code)]:font-semibold [&_code:not(pre_code)]:text-foreground/90">
                       {message.content ? (
-                        <Markdown>{linkify(message.content)}</Markdown>
+                        <Markdown
+                          options={{
+                            overrides: {
+                              pre: {
+                                component: CodeBlock,
+                              },
+                            },
+                          }}
+                        >
+                          {message.content}
+                        </Markdown>
                       ) : null}
                     </div>
 

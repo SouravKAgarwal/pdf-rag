@@ -32,7 +32,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
-import Image from "next/image";
+import Logo from "@/components/logo";
 // import { NavUser } from "@/components/nav-user";
 
 export interface DocumentInfo {
@@ -84,7 +84,9 @@ export function ChatSidebar({
               className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
               <Link href="/" className="flex items-center gap-2">
-                <Image src="/logo.svg" alt="PDF AI" width={24} height={24} />
+                <div className="w-6 h-auto flex items-center justify-center">
+                  <Logo />
+                </div>
                 <span className="font-semibold text-sm tracking-tight text-foreground">
                   PDF.ai
                 </span>

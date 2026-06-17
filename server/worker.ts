@@ -81,12 +81,17 @@ const worker = new Worker(
     
     console.log(`Embedding and upserting ${docsWithMeta.length} chunks to Pinecone...`);
     try {
-      await vectorStore.addDocuments(docsWithMeta);
+      const batchSize = 100;
+      for (let i = 0; i < docsWithMeta.length; i += batchSize) {
+        const batch = docsWithMeta.slice(i, i + batchSize);
+        await vectorStore.addDocuments(batch);
+        const progress = Math.min(95, 15 + Math.round(((i + batch.length) / docsWithMeta.length) * 80));
+        await job.updateProgress(progress);
+      }
     } catch (err: any) {
       throw err;
     }
     
-    await job.updateProgress(95);
     // 5. Update DB: mark document as ready with page count
     await db.document.update({
       where: { id: documentId },

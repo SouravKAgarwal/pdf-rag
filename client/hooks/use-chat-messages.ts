@@ -4,7 +4,7 @@ import { parseSSEStream } from "../lib/sse";
 import type {
   Message,
   Source,
-} from "../app/(protected)/chat/_components/message-list";
+} from "../components/chat/message-list";
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL;
 if (!BACKEND) {

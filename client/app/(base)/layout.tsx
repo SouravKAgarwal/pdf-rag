@@ -1,16 +1,13 @@
 import "../globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
+import type { Metadata } from "next";
+import { Roboto } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
-import { Metadata } from "next";
-import { Geist_Mono, Roboto } from "next/font/google";
+import { ThemeProvider } from "@/components/theme-provider";
+import Header from "../../components/layout/header";
+import { Suspense } from "react";
 
 const inter = Roboto({
   variable: "--font-inter",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
   subsets: ["latin"],
 });
 
@@ -19,18 +16,21 @@ export const metadata: Metadata = {
   description: "Upload PDFs and chat with them using AI",
 };
 
-export default function ProtectedLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${inter.variable} ${geistMono.variable} font-heading min-h-svh antialiased`}
-      >
+      <body className={`${inter.variable} font-heading min-h-svh antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <ClerkProvider>{children}</ClerkProvider>
+          <ClerkProvider>
+            <Suspense fallback={null}>
+              <Header />
+            </Suspense>
+            {children}
+          </ClerkProvider>
         </ThemeProvider>
       </body>
     </html>
