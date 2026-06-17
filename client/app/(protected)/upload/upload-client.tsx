@@ -1,7 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import {
+  SidebarProvider,
+  SidebarInset,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 import { useDocuments, DocumentInfo } from "@/hooks/use-documents";
 import { useFileUpload } from "@/hooks/use-file-upload";
 import { useChatMessages } from "@/hooks/use-chat-messages";
@@ -52,7 +56,7 @@ export function UploadClient({
         <div className="flex flex-1 flex-col items-center justify-center gap-6 bg-background px-4">
           {/* Animated upload orb */}
           <div className="relative">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-50 dark:from-amber-900/40 dark:to-orange-900/20 border border-amber-200/60 dark:border-amber-700/30 flex items-center justify-center shadow-md">
+            <div className="w-20 h-20 rounded-2xl bg-linear-to-br from-amber-100 to-orange-50 dark:from-amber-900/40 dark:to-orange-900/20 border border-amber-200/60 dark:border-amber-700/30 flex items-center justify-center shadow-md">
               <FileUp className="h-9 w-9 text-amber-600 dark:text-amber-400" />
             </div>
             {/* Spinning ring */}
@@ -73,7 +77,10 @@ export function UploadClient({
 
           {/* Shimmer progress bar */}
           <div className="w-48 h-1.5 rounded-full bg-muted overflow-hidden">
-            <div className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-400 animate-pulse" style={{ width: "60%" }} />
+            <div
+              className="h-full rounded-full bg-linear-to-r from-amber-400 to-orange-400 animate-pulse"
+              style={{ width: "60%" }}
+            />
           </div>
         </div>
       );
@@ -127,7 +134,9 @@ export function UploadClient({
           <div className="flex items-center gap-2">
             <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
             <Separator orientation="vertical" className="h-6 mx-2" />
-            <h1 className="font-semibold text-sm text-foreground">Upload Document</h1>
+            <h1 className="font-semibold text-sm text-foreground">
+              Upload Document
+            </h1>
           </div>
           <ThemeToggle />
         </header>

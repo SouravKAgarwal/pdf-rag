@@ -78,7 +78,7 @@ export default function Home() {
       <section className="py-24 px-6 lg:px-8 max-w-6xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
           <div className="flex flex-col items-center gap-4 group">
-            <div className="w-full max-w-[240px] mb-2 group-hover:-translate-y-2 transition-transform duration-300">
+            <div className="w-full max-w-60 mb-2 group-hover:-translate-y-2 transition-transform duration-300">
               <Image
                 src="/upload-doc.svg"
                 width={400}
@@ -97,7 +97,7 @@ export default function Home() {
           </div>
 
           <div className="flex flex-col items-center gap-4 group">
-            <div className="w-full max-w-[240px] mb-2 group-hover:-translate-y-2 transition-transform duration-300">
+            <div className="w-full max-w-60 mb-2 group-hover:-translate-y-2 transition-transform duration-300">
               <Image
                 src="/instant-answers.svg"
                 width={400}
@@ -116,7 +116,7 @@ export default function Home() {
           </div>
 
           <div className="flex flex-col items-center gap-4 group">
-            <div className="w-full max-w-[240px] mb-2 group-hover:-translate-y-2 transition-transform duration-300">
+            <div className="w-full max-w-60 mb-2 group-hover:-translate-y-2 transition-transform duration-300">
               <Image
                 src="/sources-cited.svg"
                 width={400}
