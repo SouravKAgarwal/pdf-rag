@@ -2,11 +2,11 @@ import { Worker, type Job } from "bullmq";
 import IORedis from "ioredis";
 import dotenv from "dotenv";
 import fs from "fs/promises";
-import { getVectorStore } from "./config/langchain.js";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { loadDocument } from "./services/pdfParser.js";
 import { db } from "./lib/db.js";
 import { Document } from "@langchain/core/documents";
+import { getVectorStore } from "./services/pinecone.js";
 
 dotenv.config({ quiet: true });
 
@@ -78,20 +78,25 @@ const worker = new Worker(
     // 4. Embed chunks and store in Pinecone
 
     const vectorStore = await getVectorStore();
-    
-    console.log(`Embedding and upserting ${docsWithMeta.length} chunks to Pinecone...`);
+
+    console.log(
+      `Embedding and upserting ${docsWithMeta.length} chunks to Pinecone...`,
+    );
     try {
       const batchSize = 100;
       for (let i = 0; i < docsWithMeta.length; i += batchSize) {
         const batch = docsWithMeta.slice(i, i + batchSize);
         await vectorStore.addDocuments(batch);
-        const progress = Math.min(95, 15 + Math.round(((i + batch.length) / docsWithMeta.length) * 80));
+        const progress = Math.min(
+          95,
+          15 + Math.round(((i + batch.length) / docsWithMeta.length) * 80),
+        );
         await job.updateProgress(progress);
       }
     } catch (err: any) {
       throw err;
     }
-    
+
     // 5. Update DB: mark document as ready with page count
     await db.document.update({
       where: { id: documentId },

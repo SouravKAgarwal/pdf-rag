@@ -1,5 +1,27 @@
-import { getVectorStore } from "../config/langchain.js";
+import { PineconeStore } from "@langchain/pinecone";
+import { indexingEmbeddings } from "../config/langchain.js";
 import { Document } from "@langchain/core/documents";
+import { Pinecone } from "@pinecone-database/pinecone";
+
+/**
+ * Returns a PineconeStore connected to the shared pdf-ai-docs index.
+ */
+export async function getVectorStore(): Promise<PineconeStore> {
+  if (!process.env.PINECONE_API_KEY) {
+    throw new Error("PINECONE_API_KEY environment variable is not defined");
+  }
+
+  const pc = new Pinecone({
+    apiKey: process.env.PINECONE_API_KEY,
+  });
+
+  const pineconeIndex = pc.Index("pdf-ai-docs");
+
+  return new PineconeStore(indexingEmbeddings, {
+    pineconeIndex,
+    maxConcurrency: 5,
+  });
+}
 
 /**
  * Performs a vector similarity search for the given query against the specified document.

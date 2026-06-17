@@ -122,7 +122,7 @@ function CodeBlock({ children, ...props }: any) {
       </div>
       {html ? (
         <div
-          className="[&>pre]:!m-0 [&>pre]:!bg-transparent [&>pre]:p-4 [&>pre]:font-medium [&>pre]:text-[15.5px] [&>pre]:leading-relaxed [&>pre]:overflow-x-auto"
+          className="[&>pre]:!m-0 [&>pre]:!bg-transparent [&>pre]:p-4 [&>pre]:font-medium [&>pre]:text-sm [&>pre]:leading-relaxed [&>pre]:overflow-x-auto"
           dangerouslySetInnerHTML={{ __html: html }}
         />
       ) : (

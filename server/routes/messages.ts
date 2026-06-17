@@ -35,7 +35,17 @@ router.get("/:documentId", verifyAuth, asyncHandler(async (req, res) => {
     },
   });
 
-  res.json(messages);
+  const messagesWithSources = messages.map((msg) => {
+    if (msg.role === "assistant") {
+      return {
+        ...msg,
+        sources: [{ filename: doc.filename, source: doc.filename }],
+      };
+    }
+    return msg;
+  });
+
+  res.json(messagesWithSources);
 }));
 
 export default router;

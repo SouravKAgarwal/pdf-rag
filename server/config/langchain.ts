@@ -1,18 +1,14 @@
 import { Embeddings } from "@langchain/core/embeddings";
-import { GoogleGenAI } from "@google/genai";
-import { PineconeStore } from "@langchain/pinecone";
-import { Pinecone } from "@pinecone-database/pinecone";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import dotenv from "dotenv";
+import { openrouter } from "../services/openrouter";
 
 dotenv.config({ quiet: true });
 
-const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_GEMINI_API_KEY });
-
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export class SafeGoogleEmbeddings extends Embeddings {
-  model = "gemini-embedding-001";
+export class SafeOpenRouterEmbeddings extends Embeddings {
+  model = "nvidia/llama-nemotron-embed-vl-1b-v2:free";
 
   /**
    * Embed a batch of texts with automatic chunking, rate-limit retry,
@@ -31,12 +27,17 @@ export class SafeGoogleEmbeddings extends Embeddings {
       let attempt = 0;
       while (true) {
         try {
-          const res = await ai.models.embedContent({
-            model: this.model,
-            contents: batchTexts,
+          const res = await openrouter.embeddings.generate({
+            requestBody: {
+              model: this.model,
+              input: batchTexts,
+              encodingFormat: "float",
+            },
           });
-          for (const e of res.embeddings || []) {
-            allEmbeddings.push(e.values || []);
+          if (typeof res !== "string") {
+            for (const e of res.data || []) {
+              allEmbeddings.push((e.embedding as number[]) || []);
+            }
           }
           break; // success
         } catch (err: any) {
@@ -92,45 +93,27 @@ export class SafeGoogleEmbeddings extends Embeddings {
   }
 
   async embedQuery(text: string): Promise<number[]> {
-    const res = await ai.models.embedContent({
-      model: this.model,
-      contents: text,
+    const res = await openrouter.embeddings.generate({
+      requestBody: {
+        model: this.model,
+        input: [text],
+        encodingFormat: "float",
+      },
     });
-    return res.embeddings && res.embeddings[0] && res.embeddings[0].values
-      ? res.embeddings[0].values
-      : [];
+    if (typeof res === "string") return [];
+    return (res.data?.[0]?.embedding as number[]) ?? [];
   }
 }
 
 /**
  * Used when indexing documents (at ingest time)
  */
-export const indexingEmbeddings = new SafeGoogleEmbeddings({});
+export const indexingEmbeddings = new SafeOpenRouterEmbeddings({});
 
 /** Used when embedding a user query (at query time) */
-export const queryEmbeddings = new SafeGoogleEmbeddings({});
+export const queryEmbeddings = new SafeOpenRouterEmbeddings({});
 
 export const splitter = new RecursiveCharacterTextSplitter({
   chunkSize: 1000,
   chunkOverlap: 200,
 });
-
-/**
- * Returns a PineconeStore connected to the shared pdf-ai-docs index.
- */
-export async function getVectorStore(): Promise<PineconeStore> {
-  if (!process.env.PINECONE_API_KEY) {
-    throw new Error("PINECONE_API_KEY environment variable is not defined");
-  }
-
-  const pc = new Pinecone({
-    apiKey: process.env.PINECONE_API_KEY,
-  });
-
-  const pineconeIndex = pc.Index("pdf-ai-docs");
-
-  return new PineconeStore(indexingEmbeddings, {
-    pineconeIndex,
-    maxConcurrency: 5,
-  });
-}

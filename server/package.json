@@ -19,10 +19,10 @@
   "license": "ISC",
   "dependencies": {
     "@clerk/express": "^2.1.26",
-    "@google/genai": "^2.8.0",
     "@langchain/core": "^1.1.49",
     "@langchain/pinecone": "^1.0.3",
     "@langchain/textsplitters": "^1.0.1",
+    "@openrouter/sdk": "^0.13.7",
     "@pinecone-database/pinecone": "^5.1.2",
     "@prisma/adapter-neon": "^7.8.0",
     "@prisma/client": "^7.8.0",
