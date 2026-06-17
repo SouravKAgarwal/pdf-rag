@@ -16,6 +16,12 @@ dotenv.config({ quiet: true });
 const app = express();
 const PORT = process.env.PORT ?? 8000;
 
+// Trust the first proxy hop (e.g. Nginx, cloud load-balancer).
+// Required for express-rate-limit to read the real client IP
+// from the X-Forwarded-For header without throwing a ValidationError.
+// Increase the number if there are multiple proxy hops before your app.
+app.set("trust proxy", 1);
+
 // CORS setup
 if (!process.env.ALLOWED_ORIGINS) {
   throw new Error("ALLOWED_ORIGINS environment variable is not defined");
