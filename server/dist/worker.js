@@ -1,7 +1,7 @@
 import {
   db,
   getVectorStore
-} from "./chunk-E7FJTDJI.js";
+} from "./chunk-YY5CJQHF.js";
 
 // worker.ts
 import { Worker } from "bullmq";
@@ -81,13 +81,23 @@ var worker = new Worker(
     docsWithMeta = await textSplitter.splitDocuments(docsWithMeta);
     await job.updateProgress(15);
     const vectorStore = await getVectorStore();
-    console.log(`Embedding and upserting ${docsWithMeta.length} chunks to Pinecone...`);
+    console.log(
+      `Embedding and upserting ${docsWithMeta.length} chunks to Pinecone...`
+    );
     try {
-      await vectorStore.addDocuments(docsWithMeta);
+      const batchSize = 100;
+      for (let i = 0; i < docsWithMeta.length; i += batchSize) {
+        const batch = docsWithMeta.slice(i, i + batchSize);
+        await vectorStore.addDocuments(batch);
+        const progress = Math.min(
+          95,
+          15 + Math.round((i + batch.length) / docsWithMeta.length * 80)
+        );
+        await job.updateProgress(progress);
+      }
     } catch (err) {
       throw err;
     }
-    await job.updateProgress(95);
     await db.document.update({
       where: { id: documentId },
       data: { status: "ready", pageCount: totalPages }

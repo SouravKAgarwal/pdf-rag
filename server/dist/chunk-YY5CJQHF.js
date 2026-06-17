@@ -7,18 +7,32 @@ var adapter = new PrismaNeon({
 });
 var db = new PrismaClient({ adapter });
 
+// services/pinecone.ts
+import { PineconeStore } from "@langchain/pinecone";
+
 // config/langchain.ts
 import { Embeddings } from "@langchain/core/embeddings";
-import { GoogleGenAI } from "@google/genai";
-import { PineconeStore } from "@langchain/pinecone";
-import { Pinecone } from "@pinecone-database/pinecone";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
+import dotenv2 from "dotenv";
+
+// services/openrouter.ts
+import { OpenRouter } from "@openrouter/sdk";
 import dotenv from "dotenv";
 dotenv.config({ quiet: true });
-var ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_GEMINI_API_KEY });
+if (!process.env.OPENROUTER_API_KEY) {
+  throw new Error(
+    "OPENROUTER_API_KEY is not defined in the environment variables."
+  );
+}
+var openrouter = new OpenRouter({
+  apiKey: process.env.OPENROUTER_API_KEY
+});
+
+// config/langchain.ts
+dotenv2.config({ quiet: true });
 var sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-var SafeGoogleEmbeddings = class extends Embeddings {
-  model = "gemini-embedding-001";
+var SafeOpenRouterEmbeddings = class extends Embeddings {
+  model = "nvidia/llama-nemotron-embed-vl-1b-v2:free";
   /**
    * Embed a batch of texts with automatic chunking, rate-limit retry,
    * and inter-batch delays to stay within Gemini's RPM quota.
@@ -33,12 +47,17 @@ var SafeGoogleEmbeddings = class extends Embeddings {
       let attempt = 0;
       while (true) {
         try {
-          const res = await ai.models.embedContent({
-            model: this.model,
-            contents: batchTexts
+          const res = await openrouter.embeddings.generate({
+            requestBody: {
+              model: this.model,
+              input: batchTexts,
+              encodingFormat: "float"
+            }
           });
-          for (const e of res.embeddings || []) {
-            allEmbeddings.push(e.values || []);
+          if (typeof res !== "string") {
+            for (const e of res.data || []) {
+              allEmbeddings.push(e.embedding || []);
+            }
           }
           break;
         } catch (err) {
@@ -73,19 +92,26 @@ var SafeGoogleEmbeddings = class extends Embeddings {
     return allEmbeddings;
   }
   async embedQuery(text) {
-    const res = await ai.models.embedContent({
-      model: this.model,
-      contents: text
+    const res = await openrouter.embeddings.generate({
+      requestBody: {
+        model: this.model,
+        input: [text],
+        encodingFormat: "float"
+      }
     });
-    return res.embeddings && res.embeddings[0] && res.embeddings[0].values ? res.embeddings[0].values : [];
+    if (typeof res === "string") return [];
+    return res.data?.[0]?.embedding ?? [];
   }
 };
-var indexingEmbeddings = new SafeGoogleEmbeddings({});
-var queryEmbeddings = new SafeGoogleEmbeddings({});
+var indexingEmbeddings = new SafeOpenRouterEmbeddings({});
+var queryEmbeddings = new SafeOpenRouterEmbeddings({});
 var splitter = new RecursiveCharacterTextSplitter({
   chunkSize: 1e3,
   chunkOverlap: 200
 });
+
+// services/pinecone.ts
+import { Pinecone } from "@pinecone-database/pinecone";
 async function getVectorStore() {
   if (!process.env.PINECONE_API_KEY) {
     throw new Error("PINECONE_API_KEY environment variable is not defined");
@@ -99,8 +125,18 @@ async function getVectorStore() {
     maxConcurrency: 5
   });
 }
+async function searchRelevantChunks(userId, documentId, query, k = 1e3) {
+  const vectorStore = await getVectorStore();
+  const results = await vectorStore.similaritySearch(query, k, {
+    userId,
+    documentId
+  });
+  return results;
+}
 
 export {
   db,
-  getVectorStore
+  openrouter,
+  getVectorStore,
+  searchRelevantChunks
 };
