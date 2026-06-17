@@ -11,7 +11,7 @@
     "build": "tsup index.ts worker.ts --format esm --clean",
     "start:server": "node dist/index.js",
     "start:worker": "node dist/worker.js",
-    "start": "concurrently \"pnpm start:server\" \"pnpm start:worker\"",
+    "start": "pnpm prisma generate && concurrently \"pnpm start:server\" \"pnpm start:worker\"",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [],
